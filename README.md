@@ -302,3 +302,4 @@ For issues or questions:
 2. Review API docs: http://localhost:8000/docs
 3. Test health: `curl http://localhost:8000/api/health`
 4. Run test suite: `python3 test_system.py`
+# intelligrader
