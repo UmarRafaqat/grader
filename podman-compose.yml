@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: grading_db
+    environment:
+      POSTGRES_DB: grading_db
+      POSTGRES_USER: grading_user
+      POSTGRES_PASSWORD: grading_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grading_user -d grading_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grading_network
+
+  backend:
+    build: ./backend
+    container_name: grading_backend
+    environment:
+      DATABASE_URL: postgresql://grading_user:grading_pass@db:5432/grading_db
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - grading_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    container_name: grading_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - grading_network
+    environment:
+      VITE_API_URL: http://localhost:8000
+
+networks:
+  grading_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  upload_data:
