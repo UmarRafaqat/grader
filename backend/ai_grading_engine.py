@@ -4,7 +4,6 @@ import json
 from openai import OpenAI
 from answer_preprocessor import AnswerPreprocessor
 
-
 class AIGradingEngine:
     
     def __init__(self, api_key: str = None):
