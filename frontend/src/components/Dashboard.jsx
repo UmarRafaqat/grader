@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, FileText, Users, TrendingUp, AlertCircle, Upload, UserCheck, Check } from 'lucide-react';
+import { Activity, FileText, Users, AlertCircle, Upload, UserCheck } from 'lucide-react';
 import { checkHealth, getExams } from '../services/api';
 
 export default function Dashboard() {
@@ -37,41 +37,25 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: 'Grading Accuracy',
-      value: '96%',
-      icon: TrendingUp,
-      color: '#16a34a',
-      description: 'AI-powered grading accuracy',
-    },
-    {
       title: 'Exams Available',
       value: exams.length,
       icon: FileText,
-      color: '#2563eb',
       description: 'Answer keys uploaded',
     },
+    
     {
-      title: 'Features',
-      value: '9',
-      icon: Activity,
-      color: '#8b5cf6',
-      description: 'New V2 improvements',
-    },
-    {
-      title: 'Student ID Support',
-      value: 'Alpha',
+      title: 'Question Types',
+      value: '7+',
       icon: Users,
-      color: '#f59e0b',
-      description: 'MSDS24068, MSCS745239',
+      description: 'MCQ, Descriptive, Math, Code',
     },
   ];
-
 
   return (
     <div className="page-container">
       <div className="page-header">
         <h1>Dashboard</h1>
-        <p>Intelligrade System</p>
+        <p>Grading System</p>
       </div>
 
       {/* Backend Status */}
@@ -79,7 +63,7 @@ export default function Dashboard() {
         <AlertCircle size={20} />
         <div>
           <strong>Backend Status: {backendStatus.status.toUpperCase()}</strong>
-         
+          <p style={{ margin: 0, fontSize: '0.875rem' }}>{backendStatus.message}</p>
         </div>
         {backendStatus.status === 'offline' && (
           <button onClick={checkBackendAndLoadExams} className="btn-secondary btn-sm">
@@ -94,7 +78,7 @@ export default function Dashboard() {
           const Icon = stat.icon;
           return (
             <div key={index} className="stat-card">
-              <div className="stat-icon" style={{ backgroundColor: `${stat.color}15`, color: stat.color }}>
+              <div className="stat-icon">
                 <Icon size={24} />
               </div>
               <div className="stat-content">
@@ -117,7 +101,9 @@ export default function Dashboard() {
           >
             <Upload size={32} />
             <h3>Upload Answer Key</h3>
-            
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+              Configure questions and grading criteria
+            </p>
           </button>
           
           <button 
@@ -126,7 +112,9 @@ export default function Dashboard() {
           >
             <FileText size={32} />
             <h3>Upload Student Papers</h3>
-
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+              Submit answer sheets for grading
+            </p>
           </button>
           
           <button 
@@ -135,7 +123,9 @@ export default function Dashboard() {
           >
             <Activity size={32} />
             <h3>View Results</h3>
-         
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+              Check student scores and analysis
+            </p>
           </button>
           
           <button 
@@ -144,7 +134,9 @@ export default function Dashboard() {
           >
             <UserCheck size={32} />
             <h3>Teacher Review</h3>
-     
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+              Review and edit AI grading
+            </p>
           </button>
         </div>
       </div>

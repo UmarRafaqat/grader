@@ -16,7 +16,7 @@ function App() {
           <div className="nav-container">
             <div className="logo">
               <FileText size={28} />
-              <span>AI Grading System</span>
+              <span>IntelliGrader</span>
             </div>
             <ul>
               <li>

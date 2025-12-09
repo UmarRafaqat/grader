@@ -1,7 +1,3 @@
-"""
-AI-Powered Grading Engine
-Uses LLMs for intelligent grading across all question types
-"""
 from typing import Dict, List, Any
 import re
 import json
@@ -10,10 +6,8 @@ from answer_preprocessor import AnswerPreprocessor
 
 
 class AIGradingEngine:
-    """AI-powered grading engine using OpenAI GPT models"""
     
     def __init__(self, api_key: str = None):
-        """Initialize with OpenAI API key"""
         if not api_key:
             print("WARNING: No API key provided - AI grading will not work")
             self.client = None
@@ -28,9 +22,7 @@ class AIGradingEngine:
     
     def grade_mcq(self, student_answer: str, correct_answer: str, 
                   question_text: str, max_marks: float) -> Dict[str, Any]:
-        """Grade MCQ using AI with preprocessing"""
         
-        # Preprocess answer
         preprocessed = self.preprocessor.preprocess_mcq(student_answer)
         
         prompt = f"""You are an expert exam grader. Grade this Multiple Choice Question.
@@ -63,9 +55,7 @@ Return ONLY valid JSON."""
     
     def grade_fill_in_blank(self, student_answer: str, correct_answers: List[str],
                            question_text: str, max_marks: float) -> Dict[str, Any]:
-        """Grade fill-in-the-blank using AI with preprocessing"""
         
-        # Preprocess answer
         preprocessed = self.preprocessor.preprocess_fill_in_blank(student_answer)
         
         prompt = f"""You are an expert exam grader. Grade this Fill-in-the-Blank question.
@@ -98,11 +88,29 @@ Return ONLY valid JSON."""
     
     def grade_descriptive(self, student_answer: str, model_answer: str,
                          key_concepts: List[str], question_text: str, 
-                         max_marks: float) -> Dict[str, Any]:
-        """Grade descriptive answer using AI with preprocessing"""
+                         max_marks: float, grading_criteria: List[Dict] = None) -> Dict[str, Any]:
         
-        # Preprocess answer
         preprocessed = self.preprocessor.preprocess_descriptive(student_answer)
+        
+        if grading_criteria and len(grading_criteria) > 0:
+            criteria_text = "**Grading Criteria:**\n"
+            for criterion in grading_criteria:
+                criteria_text += f"{criterion['weight']}% - {criterion['name']}\n"
+            
+            criteria_instructions = "\n".join([
+                f"- {criterion['name']} ({criterion['weight']}%): Evaluate this aspect"
+                for criterion in grading_criteria
+            ])
+        else:
+            criteria_text = """**Grading Criteria:**
+40% - Concept Coverage
+30% - Accuracy
+20% - Completeness
+10% - Clarity"""
+            criteria_instructions = """- Concept Coverage (40%): How many required concepts covered?
+- Accuracy (30%): Factually correct?
+- Completeness (20%): Thorough explanation?
+- Clarity (10%): Clear and organized?"""
         
         prompt = f"""You are an expert exam grader. Grade this descriptive answer.
 
@@ -119,16 +127,17 @@ Preprocessing Info:
 - Key Terms Found: {', '.join(preprocessed['key_terms'][:10])}
 - Notes: {preprocessed['preprocessing_notes']}
 
-**Grading Criteria:**
-1. Concept Coverage (40%): How many required concepts covered?
-2. Accuracy (30%): Factually correct?
-3. Completeness (20%): Thorough explanation?
-4. Clarity (10%): Clear and organized?
+{criteria_text}
+
+**Instructions:**
+{criteria_instructions}
+
+Evaluate each criterion carefully and provide a detailed breakdown of how the student performed in each area.
 
 **Respond in JSON:**
 {{
     "score": <number 0 to {max_marks}>,
-    "reasoning": "<(1) List concepts found/missing, (2) Check accuracy, (3) Evaluate completeness/clarity, (4) Explain score>"
+    "reasoning": "<For each criterion: (1) What the student wrote, (2) How well it meets the criterion, (3) Score contribution. Then explain final score.>"
 }}
 
 Return ONLY valid JSON."""
@@ -139,9 +148,7 @@ Return ONLY valid JSON."""
     
     def grade_ordering(self, student_answer: str, correct_sequence: List[str],
                       question_text: str, max_marks: float) -> Dict[str, Any]:
-        """Grade ordering/sequence using AI with preprocessing"""
         
-        # Preprocess answer
         preprocessed = self.preprocessor.preprocess_ordering(student_answer)
         
         prompt = f"""You are an expert exam grader. Grade this Ordering question.
@@ -174,11 +181,29 @@ Return ONLY valid JSON."""
     
     def grade_programming(self, student_code: str, expected_output: str,
                          test_cases: List[Dict], question_text: str,
-                         max_marks: float) -> Dict[str, Any]:
-        """Grade programming code using AI with preprocessing"""
+                         max_marks: float, grading_criteria: List[Dict] = None) -> Dict[str, Any]:
         
-        # Preprocess code
         preprocessed = self.preprocessor.preprocess_programming(student_code)
+        
+        if grading_criteria and len(grading_criteria) > 0:
+            criteria_text = "**Grading Criteria:**\n"
+            for criterion in grading_criteria:
+                criteria_text += f"{criterion['weight']}% - {criterion['name']}\n"
+            
+            criteria_instructions = "\n".join([
+                f"- {criterion['name']} ({criterion['weight']}%): Evaluate this aspect"
+                for criterion in grading_criteria
+            ])
+        else:
+            criteria_text = """**Criteria:**
+50% - Correctness
+20% - Logic
+15% - Quality
+15% - Efficiency"""
+            criteria_instructions = """- Correctness (50%): Produces correct output?
+- Logic (20%): Algorithm sound?
+- Quality (15%): Clean, readable?
+- Efficiency (15%): Reasonable complexity?"""
         
         prompt = f"""You are an expert programming instructor. Grade this code.
 
@@ -200,11 +225,10 @@ Preprocessing Info:
 {student_code}
 ```
 
-**Criteria:**
-1. Correctness (50%): Produces correct output?
-2. Logic (20%): Algorithm sound?
-3. Quality (15%): Clean, readable?
-4. Efficiency (15%): Reasonable complexity?
+{criteria_text}
+
+**Instructions:**
+{criteria_instructions}
 
 **Respond in JSON:**
 {{
@@ -220,11 +244,29 @@ Return ONLY valid JSON."""
     
     def grade_mathematical(self, student_answer: str, correct_answer: str,
                           solution_steps: List[str], question_text: str,
-                          max_marks: float) -> Dict[str, Any]:
-        """Grade mathematical answer using AI with preprocessing"""
+                          max_marks: float, grading_criteria: List[Dict] = None) -> Dict[str, Any]:
         
-        # Preprocess answer
         preprocessed = self.preprocessor.preprocess_mathematical(student_answer)
+        
+        if grading_criteria and len(grading_criteria) > 0:
+            criteria_text = "**Grading Criteria:**\n"
+            for criterion in grading_criteria:
+                criteria_text += f"{criterion['weight']}% - {criterion['name']}\n"
+            
+            criteria_instructions = "\n".join([
+                f"- {criterion['name']} ({criterion['weight']}%): Evaluate this aspect"
+                for criterion in grading_criteria
+            ])
+        else:
+            criteria_text = """**Criteria:**
+40% - Final Answer
+30% - Method
+20% - Steps
+10% - Notation"""
+            criteria_instructions = """- Final Answer (40%): Correct?
+- Method (30%): Approach correct?
+- Steps (20%): Intermediate steps shown?
+- Notation (10%): Proper notation?"""
         
         prompt = f"""You are an expert mathematics teacher. Grade this solution.
 
@@ -241,11 +283,10 @@ Preprocessing Info:
 - Has Equation: {preprocessed['has_equation']}
 - Notes: {preprocessed['preprocessing_notes']}
 
-**Criteria:**
-1. Final Answer (40%): Correct?
-2. Method (30%): Approach correct?
-3. Steps (20%): Intermediate steps shown?
-4. Notation (10%): Proper notation?
+{criteria_text}
+
+**Instructions:**
+{criteria_instructions}
 
 **Respond in JSON:**
 {{
@@ -261,12 +302,12 @@ Return ONLY valid JSON."""
     
     def grade_question(self, question_id: str, question_config: Dict,
                       student_answer: Any) -> Dict[str, Any]:
-        """Route to appropriate grading method"""
         
         q_type = question_config.get("type", "mcq")
         max_marks = question_config.get("marks", 1.0)
         question_text = question_config.get("question_text", "")
         ground_truth = question_config.get("ground_truth", {})
+        grading_criteria = question_config.get("grading_criteria", [])
         
         print(f"\nAI Grading {question_id} (Type: {q_type})")
         
@@ -278,15 +319,43 @@ Return ONLY valid JSON."""
             elif q_type == "fill_in_blank":
                 grading = self.grade_fill_in_blank(student_answer, ground_truth.get("correct_answers", []), question_text, max_marks)
             elif q_type == "descriptive":
-                grading = self.grade_descriptive(student_answer, ground_truth.get("model_answer", ""), ground_truth.get("key_concepts", []), question_text, max_marks)
+                grading = self.grade_descriptive(
+                    student_answer, 
+                    ground_truth.get("model_answer", ""), 
+                    ground_truth.get("key_concepts", []), 
+                    question_text, 
+                    max_marks,
+                    grading_criteria
+                )
             elif q_type in ["ordering", "sequence"]:
                 grading = self.grade_ordering(student_answer, ground_truth.get("correct_sequence", []), question_text, max_marks)
             elif q_type == "programming":
-                grading = self.grade_programming(student_answer, ground_truth.get("expected_output", ""), ground_truth.get("test_cases", []), question_text, max_marks)
+                grading = self.grade_programming(
+                    student_answer, 
+                    ground_truth.get("expected_output", ""), 
+                    ground_truth.get("test_cases", []), 
+                    question_text, 
+                    max_marks,
+                    grading_criteria
+                )
             elif q_type == "mathematical":
-                grading = self.grade_mathematical(student_answer, ground_truth.get("correct_answer", ""), ground_truth.get("solution_steps", []), question_text, max_marks)
+                grading = self.grade_mathematical(
+                    student_answer, 
+                    ground_truth.get("correct_answer", ""), 
+                    ground_truth.get("solution_steps", []), 
+                    question_text, 
+                    max_marks,
+                    grading_criteria
+                )
             else:
-                grading = self.grade_descriptive(student_answer, ground_truth.get("model_answer", ""), ground_truth.get("key_concepts", []), question_text, max_marks)
+                grading = self.grade_descriptive(
+                    student_answer, 
+                    ground_truth.get("model_answer", ""), 
+                    ground_truth.get("key_concepts", []), 
+                    question_text, 
+                    max_marks,
+                    grading_criteria
+                )
             
             result.update(grading)
             print(f"Graded: {grading.get('score', 0)}/{max_marks}")
@@ -298,7 +367,6 @@ Return ONLY valid JSON."""
         return result
     
     def grade_submission(self, ground_truth_questions: Dict, extracted_answers: Dict) -> List[Dict]:
-        """Grade entire submission"""
         results = []
         
         print(f"\n{'='*60}\nAI GRADING\n{'='*60}")
@@ -317,7 +385,6 @@ Return ONLY valid JSON."""
         return results
     
     def _find_answer(self, q_id: str, answers: Dict) -> str:
-        """Find student answer with fuzzy matching"""
         if q_id in answers:
             return answers[q_id] if isinstance(answers[q_id], str) else answers[q_id].get("answer", "")
         
@@ -334,7 +401,6 @@ Return ONLY valid JSON."""
         return ""
     
     def _call_llm(self, prompt: str, max_marks: float) -> Dict:
-        """Call LLM and parse response"""
         if not self.client:
             return {"score": 0, "reasoning": "AI service not available - please configure OPENAI_API_KEY"}
         
@@ -350,7 +416,6 @@ Return ONLY valid JSON."""
             return {"score": 0, "reasoning": f"AI call failed: {str(e)}"}
     
     def _parse_json(self, response: str) -> Dict:
-        """Parse JSON from response"""
         try:
             response = re.sub(r'```json\s*|\s*```', '', response).strip()
             return json.loads(response)

@@ -73,7 +73,6 @@ export default function TeacherReview() {
         editData.comment
       );
 
-      // Update local state
       const updatedResults = review.results.map(r => {
         if (r.question_id === questionId) {
           return {
@@ -126,13 +125,12 @@ export default function TeacherReview() {
         </div>
       )}
 
-      {/* Search */}
       <div className="search-group">
         <div className="form-section">
           <h3>Load Submission</h3>
-          <div style={{ marginBottom: '1rem', padding: '1rem', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-            <p style={{ margin: 0, color: '#1e40af', fontSize: '0.875rem', lineHeight: '1.5' }}>
-              <strong>You can search using:</strong><br />
+          <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.5' }}>
+              <strong style={{ color: 'var(--text-primary)' }}>You can search using:</strong><br />
               • <strong>Submission ID</strong> (number): 1, 2, 3, etc.<br />
               • <strong>Student ID</strong> (alphanumeric): MSDS24068, MSCS745239, etc.
             </p>
@@ -170,10 +168,8 @@ export default function TeacherReview() {
         </div>
       </div>
 
-      {/* Review Display */}
       {review && (
         <>
-          {/* Summary */}
           <div className="review-summary">
             <h3>Review for Submission #{review.submission.id}</h3>
             <div className="total-score">
@@ -183,51 +179,51 @@ export default function TeacherReview() {
             <p>Exam: {review.ground_truth.exam_name}</p>
           </div>
 
-          {/* Questions */}
           <div className="review-questions">
             {review.results.map((result, index) => (
               <div key={index} className="review-card">
                 <h4>{result.question_id} ({result.max_score} marks)</h4>
 
-                {/* AI Reasoning */}
                 <div className="ai-reasoning">
                   <h5>
                     <Brain size={16} />
                     AI Grading Analysis
                   </h5>
                   <div style={{ 
-                    background: '#f8fafc', 
+                    background: 'var(--bg-tertiary)', 
                     padding: '1rem', 
                     borderRadius: '8px',
                     whiteSpace: 'pre-line',
                     fontSize: '0.875rem',
                     lineHeight: '1.6',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
-                    border: '1px solid #e2e8f0'
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)'
                   }}>
                     {result.reasoning}
                   </div>
                   {result.breakdown && (
                     <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                      <strong>Details:</strong>
+                      <strong style={{ color: 'var(--text-primary)' }}>Details:</strong>
                       <div style={{ 
-                        background: '#f8fafc', 
+                        background: 'var(--bg-tertiary)', 
                         padding: '0.75rem', 
                         borderRadius: '4px',
-                        marginTop: '0.5rem'
+                        marginTop: '0.5rem',
+                        border: '1px solid var(--border-color)'
                       }}>
                         {result.breakdown.selected && (
-                          <p style={{ margin: '0.25rem 0' }}>
+                          <p style={{ margin: '0.25rem 0', color: 'var(--text-primary)' }}>
                             <strong>Student selected:</strong> {result.breakdown.selected}
                           </p>
                         )}
                         {result.breakdown.correct && (
-                          <p style={{ margin: '0.25rem 0' }}>
+                          <p style={{ margin: '0.25rem 0', color: 'var(--text-primary)' }}>
                             <strong>Correct answer:</strong> {result.breakdown.correct}
                           </p>
                         )}
                         {result.breakdown.match !== undefined && (
-                          <p style={{ margin: '0.25rem 0' }}>
+                          <p style={{ margin: '0.25rem 0', color: 'var(--text-primary)' }}>
                             <strong>Match:</strong> {result.breakdown.match ? '✓ Yes' : '✗ No'}
                           </p>
                         )}
@@ -236,17 +232,17 @@ export default function TeacherReview() {
                   )}
                 </div>
 
-                {/* Current Score */}
                 <div style={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center',
                   padding: '1rem',
-                  background: '#f8fafc',
+                  background: 'var(--bg-tertiary)',
                   borderRadius: '8px',
-                  marginTop: '1rem'
+                  marginTop: '1rem',
+                  border: '1px solid var(--border-color)'
                 }}>
-                  <div>
+                  <div style={{ color: 'var(--text-primary)' }}>
                     <strong>Current Score:</strong> {result.score} / {result.max_score}
                   </div>
                   {editingQuestion !== result.question_id && (
@@ -260,7 +256,6 @@ export default function TeacherReview() {
                   )}
                 </div>
 
-                {/* Edit Section */}
                 {editingQuestion === result.question_id && (
                   <div className="edit-section">
                     <h5>Edit Grade</h5>
@@ -317,7 +312,6 @@ export default function TeacherReview() {
                   </div>
                 )}
 
-                {/* Teacher Comment Display */}
                 {result.teacher_comment && editingQuestion !== result.question_id && (
                   <div className="teacher-comment">
                     <h5>
@@ -343,7 +337,6 @@ export default function TeacherReview() {
         </>
       )}
 
-      {/* Empty State */}
       {!review && !loading && !message.text && (
         <div className="empty-state">
           <Brain size={48} />

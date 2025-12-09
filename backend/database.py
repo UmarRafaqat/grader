@@ -1,11 +1,4 @@
-"""
-Database models and ORM with PostgreSQL
-Fixed issues:
-- Proper JSON serialization
-- Better error handling
-- Fixed query methods
-"""
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, Text
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, Text, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -88,7 +81,8 @@ class Database:
     def is_connected(self) -> bool:
         """Check database connection"""
         try:
-            self.session.execute("SELECT 1")
+            # Use text() for raw SQL
+            self.session.execute(text("SELECT 1"))
             return True
         except Exception as e:
             print(f"Database connection check failed: {str(e)}")

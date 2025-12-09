@@ -7,22 +7,39 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 
+class GradingCriterion(BaseModel):
+    """Individual grading criterion for descriptive questions"""
+    name: str = Field(..., description="Name of the criterion (e.g., 'Concept Coverage')")
+    weight: float = Field(..., description="Weight percentage (0-100)")
+
+
 class QuestionConfig(BaseModel):
     """Question configuration model"""
     type: str = Field(..., description="Question type: mcq, descriptive, ordering")
     marks: float = Field(..., description="Maximum marks for this question")
     question_text: Optional[str] = Field("", description="Question text")
     ground_truth: Dict[str, Any] = Field(..., description="Ground truth data")
+    grading_criteria: Optional[List[GradingCriterion]] = Field(
+        None, 
+        description="Grading criteria for descriptive questions"
+    )
     
     class Config:
         json_schema_extra = {
             "example": {
-                "type": "mcq",
-                "marks": 2.0,
-                "question_text": "What is the capital of France?",
+                "type": "descriptive",
+                "marks": 10.0,
+                "question_text": "Explain the concept of polymorphism in OOP",
                 "ground_truth": {
-                    "correct_answer": "A"
-                }
+                    "model_answer": "Polymorphism allows objects to take multiple forms...",
+                    "key_concepts": ["inheritance", "method overriding", "interfaces"]
+                },
+                "grading_criteria": [
+                    {"name": "Concept Coverage", "weight": 40},
+                    {"name": "Accuracy", "weight": 30},
+                    {"name": "Completeness", "weight": 20},
+                    {"name": "Clarity", "weight": 10}
+                ]
             }
         }
 

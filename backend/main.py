@@ -1,12 +1,3 @@
-"""
-AI Grading System V2 - Complete Backend
-Fixed Issues:
-- Proper database integration with PostgreSQL
-- Better error handling
-- Fixed Pydantic V2 compatibility
-- Improved OCR integration
-- Better question matching
-"""
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -25,7 +16,7 @@ load_dotenv()
 # Import local modules
 from models import QuestionConfig, GroundTruthCreate, SubmissionCreate, GradeEdit
 from database import Database
-from ai_grading_engine import AIGradingEngine  # Updated to use AI-powered grading
+from ai_grading_engine import AIGradingEngine
 from ocr_service import EnhancedOCRService
 
 # Global instances
@@ -45,43 +36,60 @@ def initialize_services():
     api_key = os.getenv("OPENAI_API_KEY")
     
     if not api_key:
-        print("WARNING: OPENAI_API_KEY not set in .env file")
-        print("OCR features will not work without an API key")
-        print("AI grading will use fallback mode")
+        print("\n" + "="*60)
+        print("⚠️  WARNING: OPENAI_API_KEY not set!")
+        print("="*60)
+        print("AI grading and OCR features will not work.")
+        print("Please add your OpenAI API key to backend/.env file:")
+        print("OPENAI_API_KEY=your-key-here")
+        print("="*60 + "\n")
     
     # Initialize database
-    db = Database()
-    if db.is_connected():
-        print("Database connected successfully")
-    else:
-        print("Database connection failed")
+    try:
+        db = Database()
+        if db.is_connected():
+            print("✅ Database connected successfully")
+        else:
+            print("❌ Database connection failed")
+    except Exception as e:
+        print(f"❌ Database initialization error: {str(e)}")
+        db = None
     
-    # Initialize services (with fallback if no API key)
+    # Initialize AI services
     if api_key:
-        grading_engine = AIGradingEngine(api_key)
-        ocr_service = EnhancedOCRService(api_key)
+        try:
+            grading_engine = AIGradingEngine(api_key)
+            ocr_service = EnhancedOCRService(api_key)
+            print("✅ AI services initialized successfully")
+        except Exception as e:
+            print(f"❌ AI services initialization error: {str(e)}")
+            grading_engine = None
+            ocr_service = None
     else:
-        print("Running in fallback mode without AI services")
         grading_engine = None
         ocr_service = None
     
-    print("Services initialized!")
+    print("\n" + "="*60)
+    print("SERVICE STATUS:")
+    print(f"  Database: {'✅ Active' if db and db.is_connected() else '❌ Inactive'}")
+    print(f"  AI Grading: {'✅ Active' if grading_engine else '❌ Inactive'}")
+    print(f"  OCR Service: {'✅ Active' if ocr_service else '❌ Inactive'}")
+    print("="*60 + "\n")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
-    print("Initializing AI Grading System V2...")
+    print("\n🚀 Starting AI Grading System...")
     initialize_services()
     yield
-    print("Shutting down...")
+    print("\n👋 Shutting down...")
 
 
 # Create FastAPI app
 app = FastAPI(
-    title="AI Grading System V2",
-    description="Automated quiz grading with AI-powered accuracy",
-    version="2.0.0",
+    title="AI Grading System",
+    version="2.0",
     lifespan=lifespan
 )
 
@@ -104,8 +112,8 @@ async def root():
     """Health check endpoint"""
     return {
         "status": "online",
-        "message": "AI Grading System V2 is running",
-        "version": "2.0.0",
+        "message": "AI Grading System is running",
+        "version": "2.0",
         "timestamp": datetime.now().isoformat()
     }
 
@@ -125,12 +133,15 @@ async def health():
 
 
 @app.post("/api/auto-configure")
-async def auto_configure(files: List[UploadFile] = File(...)):
-    """Auto-fill questions from images using GPT-4 Vision"""
+async def auto_configure(
+    exam_name: str = Form(...),
+    files: List[UploadFile] = File(...)
+):
+    """Auto-configure questions from images using GPT-4 Vision"""
     if not ocr_service:
         raise HTTPException(
             status_code=503, 
-            detail="OCR service not available. Check OPENAI_API_KEY in .env file."
+            detail="OCR service not available. Please configure OPENAI_API_KEY in backend/.env file."
         )
     
     try:
@@ -142,7 +153,7 @@ async def auto_configure(files: List[UploadFile] = File(...)):
             file_paths.append(str(file_path))
         
         # Extract ground truth with auto-config
-        result = ocr_service.extract_ground_truth(file_paths)
+        questions_dict = ocr_service.extract_ground_truth(file_paths)
         
         # Cleanup temp files
         for path in file_paths:
@@ -153,9 +164,8 @@ async def auto_configure(files: List[UploadFile] = File(...)):
         
         return {
             "success": True,
-            "suggested_config": {
-                "questions": result
-            }
+            "questions": questions_dict,
+            "exam_name": exam_name
         }
     except Exception as e:
         print(f"Auto-configure error: {str(e)}")
@@ -165,43 +175,23 @@ async def auto_configure(files: List[UploadFile] = File(...)):
 @app.post("/api/upload-ground-truth")
 async def upload_ground_truth(
     exam_name: str = Form(...),
-    files: List[UploadFile] = File(...),
-    config: str = Form(...)
+    questions: str = Form(...),
+    total_marks: str = Form(...)
 ):
     """Upload ground truth (answer key)"""
     try:
-        config_data = json.loads(config)
-        
-        # Save image files
-        file_paths = []
-        for file in files:
-            if file.filename and file.filename != 'manual_entry.txt':
-                content = await file.read()
-                await file.seek(0)
-                
-                if len(content) > 100:
-                    file_path = UPLOAD_DIR / f"gt_{exam_name}_{file.filename}"
-                    with open(file_path, "wb") as buffer:
-                        shutil.copyfileobj(file.file, buffer)
-                    file_paths.append(str(file_path))
-        
-        # Create question configs
-        questions = {}
-        total_marks = 0
-        
-        for q_id, q_config in config_data.items():
-            questions[q_id] = q_config
-            total_marks += q_config.get("marks", 0)
+        questions_dict = json.loads(questions)
+        total_marks_float = float(total_marks)
         
         # Store in database
-        exam_id = db.add_ground_truth(exam_name, questions, total_marks)
+        exam_id = db.add_ground_truth(exam_name, questions_dict, total_marks_float)
         
         return {
             "success": True,
             "exam_id": exam_id,
             "exam_name": exam_name,
-            "total_marks": total_marks,
-            "questions_count": len(questions)
+            "total_marks": total_marks_float,
+            "questions_count": len(questions_dict)
         }
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=400, detail=f"Invalid configuration format: {str(e)}")
@@ -311,17 +301,9 @@ async def grade_paper(submission_id: int):
         if not ground_truth:
             raise HTTPException(status_code=404, detail="Ground truth not found")
         
-        # Convert questions dict to QuestionConfig objects for grading
-        questions_dict = {}
-        for q_id, q_data in ground_truth.questions.items():
-            if isinstance(q_data, dict):
-                questions_dict[q_id] = QuestionConfig(**q_data)
-            else:
-                questions_dict[q_id] = q_data
-        
         # Grade submission
         results = grading_engine.grade_submission(
-            questions_dict,
+            ground_truth.questions,
             submission.extracted_answers
         )
         
@@ -522,6 +504,6 @@ async def edit_grade(
 # Run server
 if __name__ == "__main__":
     import uvicorn
-    print("Starting AI Grading System V2...")
-    print("API Documentation: http://localhost:8000/docs")
+    print("\n🚀 Starting AI Grading System...")
+    print("📚 API Documentation: http://localhost:8000/docs")
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

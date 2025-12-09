@@ -23,9 +23,12 @@ services:
   backend:
     build: ./backend
     container_name: grading_backend
+    # This reads backend/.env and loads ALL variables from it
+    env_file:
+      - ./backend/.env
     environment:
+      # Don't override OPENAI_API_KEY here - let env_file handle it
       DATABASE_URL: postgresql://grading_user:grading_pass@db:5432/grading_db
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
     volumes:
       - ./backend:/app
       - upload_data:/app/uploads

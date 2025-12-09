@@ -10,7 +10,6 @@ export default function Results() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Auto-search if ID is in URL params
   useEffect(() => {
     const idFromUrl = searchParams.get('id');
     if (idFromUrl) {
@@ -113,7 +112,6 @@ export default function Results() {
         </div>
       )}
 
-      {/* Search */}
       <div className="search-group">
         <div className="form-section">
           <h3>Search Results</h3>
@@ -149,10 +147,8 @@ export default function Results() {
         </div>
       </div>
 
-      {/* Results Display */}
       {results && (
         <>
-          {/* Overall Score */}
           <div className="score-summary">
             <Award size={48} style={{ color: '#f59e0b', marginBottom: '1rem' }} />
             <div className={`score-large ${getScoreColor(results.percentage)}`}>
@@ -182,7 +178,6 @@ export default function Results() {
             </div>
           </div>
 
-          {/* Question-by-Question Results */}
           <div className="form-section">
             <h3>Question-by-Question Breakdown</h3>
             <div className="results-list">
@@ -206,7 +201,7 @@ export default function Results() {
                     <div className="answer-section">
                       <strong>AI Grading Analysis</strong>
                       <div style={{ 
-                        background: '#f8fafc', 
+                        background: 'var(--bg-tertiary)', 
                         padding: '1rem', 
                         borderRadius: '8px',
                         marginTop: '0.5rem',
@@ -214,7 +209,8 @@ export default function Results() {
                         fontSize: '0.875rem',
                         lineHeight: '1.6',
                         fontFamily: 'system-ui, -apple-system, sans-serif',
-                        border: '1px solid #e2e8f0'
+                        border: '1px solid var(--border-color)',
+                        color: 'var(--text-primary)'
                       }}>
                         {result.reasoning}
                       </div>
@@ -223,7 +219,7 @@ export default function Results() {
                     {result.breakdown && (
                       <div className="answer-section">
                         <strong>Breakdown</strong>
-                        <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                           {Object.entries(result.breakdown).map(([key, value]) => (
                             <div key={key} style={{ marginBottom: '0.25rem' }}>
                               <strong>{key}:</strong> {JSON.stringify(value)}
@@ -238,7 +234,6 @@ export default function Results() {
             </div>
           </div>
 
-          {/* Statistics */}
           {stats && (
             <div className="statistics-grid">
               <div className="stat-box">
@@ -262,7 +257,6 @@ export default function Results() {
         </>
       )}
 
-      {/* Empty State */}
       {!results && !loading && !message.text && (
         <div className="empty-state">
           <FileText size={48} />
